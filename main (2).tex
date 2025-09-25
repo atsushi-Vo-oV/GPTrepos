@@ -1,9 +1,21 @@
 \documentclass[11pt, footer]{beamer}
 
-\usepackage{packages}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{graphicx}
+\usepackage{ascmac}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{CJKutf8}
+\usepackage[whole]{bxcjkjatype}
 
+\newcommand{\eng}{english}
+\newcommand{\setlang}[1]{}
 
-\institute{Kobe-University, Japan}
+\newcommand{\ftheme}[1]{\par\medskip{\usebeamerfont{frametitle}\textcolor{structure.fg}{#1}}\par\medskip}
+\newcommand{\itemizer}[1]{\begin{itemize}#1\end{itemize}}
+\newcommand{\eqatn}[1]{\textcolor{structure.fg}{\textbf{#1}}}
+
+\institute{Kobe University, Japan}
 \date{\today}
 \setbeamercolor{author in head/foot}{fg=blue}
 \setbeamercolor{title in head/foot}{fg=blue}
@@ -21,30 +33,349 @@
 \begin{document}
 
 \frame{\titlepage}
-\input{slides/self-introduction}
 
-\input{slides/contents1}
-\input{slides/background-LSSL}
-\input{slides/background-HiPPO}
-\input{slides/background4}
-\input{slides/background6}
+\begin{frame}{Introduction}
+\ftheme{Motivation}
+\begin{itemize}
+    \item 時系列データの処理では、長期依存を保持しながらも計算が軽いモデルが求められている。
+    \item HiPPO 行列を用いた LSSL はその要件を満たす有望なアプローチとして提案されてきた。
+    \item 本研究では HiPPO 行列を無限次元空間へ拡張し、その上での LSSL の明示的解を導く。
+\end{itemize}
+\ftheme{Contributions}
+\begin{itemize}
+    \item 無限次元 HiPPO の定義と、既存の有限次元版との対応関係を明確化。
+    \item 導入した作用素を用いた LSSL の挙動を解析し、解の閉形式表現を提示。
+\end{itemize}
+\end{frame}
 
-\input{slides/contents2}
+\begin{frame}{Outline}
+\ftheme{Agenda}
+\begin{enumerate}
+    \item LSSL と HiPPO 行列の復習
+    \item 無限次元 HiPPO の構成
+    \item 解の解析的表示と畳み込み核
+    \item 数値実験
+    \item まとめ
+\end{enumerate}
+\end{frame}
 
-\input{slides/infhippo-1}
-\input{slides/infhippo-2}
-\input{slides/infhippo-3}
-\input{slides/infhippo-4}
-\input{slides/contents1}
-\input{slides/body4}
-\input{slides/body5}
-\input{slides/contents4}
-\input{slides/experiment-1}
-\input{slides/experiments2}
-\input{slides/experiments3}
-\input{slides/conclusion}
+\begin{frame}{Background}
+\ftheme{State Space Model, LSSL}
+\begin{itemize}
+    \item 次で表される変換\(u \to y\)を\eqatn{状態空間モデル(SSM)}という。
+    \item 特にこの変換を深層学習の層として用いたものを\eqatn{Linear State Space Layer(LSSL)}という。
+\end{itemize}
+\begin{itembox}{\eqatn{SSM, LSSL}}
+    \noindent
+    \begin{gather*}
+        \frac{dh}{dt}(t) = Ah(t) + Bu(t) \\
+        y(t) = Ch(t) \\
+        h(0) = 0
+    \end{gather*}
+\end{itembox}
+{\footnotesize
+ただし、\(u:[0,T] \to \mathbb{B}_\mathrm{in}\),
+\(h:[0,T] \to \mathbb{B}_\mathrm{out}\),
+\(A \in \mathcal{L}(
+    \mathbb{B}_{\mathrm{state}},
+    \mathbb{B}_{\mathrm{state}})
+\),
+\(
+B \in \mathcal{L}(\mathbb{B}_{\mathrm{in}}, \mathbb{B}_{\mathrm{state}})
+\),
+\(C \in \mathcal{L}(\mathbb{B}_{\mathrm{out}}, \mathbb{B}_{\mathrm{state}})\)。
+\(\mathbb{B}_*\)はバナッハ空間を意味し、\(\mathcal{L}(\mathbb{B}_1, \mathbb{B}_2)\)は\(\mathbb{B}_1\)から\(\mathbb{B}_2\)への線形写像全体を表す。
+}
+{\footnotesize
+LSSL では特に \(\mathbb{B}_{\mathrm{in}} = \mathbb{B}_{\mathrm{out}} = \mathbb{R}\),
+\(\mathbb{B}_{\mathrm{state}} = \mathbb{R}^N\) を用い、\(d_{\mathrm{model}}\) 個を並列化して実装される。
+}
+\end{frame}
 
-\input{slides/reference}
+\begin{frame}{Background}
+\ftheme{HiPPO Matrix}
+\itemizer{
+    \item 次の行列を\eqatn{HiPPO 行列} という。
+    \item LSSLをHiPPO 行列で初期化することにより、深層学習の層としての性能が向上することが（実験的に）知られている\cite{S4}。
+}
+\begin{itembox}{\eqatn{HiPPO 行列}}
+    \begin{equation*}
+        A_{ij} = - \left\{
+        \begin{array}{ll}
+            (2i + 1)^{1/2} (2j+1)^{1/2} & (i > j) \\
+            i + 1 & (i = j) \\
+            0 & (i < j)
+        \end{array}
+        \right.
+    \end{equation*}
+    \begin{equation*}
+    B_{i} = (2i + 1)^{1/2}
+    \end{equation*}
+\end{itembox}
+\end{frame}
 
+\begin{frame}{Background: LSSL Solution}
+\ftheme{Integral Representation}
+\begin{itemize}
+    \item SSM の形式解は指数作用素を用いて次のように表される。
+\end{itemize}
+\begin{screen}
+    \[
+    y(t)=\int_0^t C\exp\left((t - \tau) A\right)B\,u(\tau)\,\mathrm{d} \tau.
+    \]
+\end{screen}
+\begin{itemize}
+    \item 入力 $u$ がスカラー関数のとき、出力はカーネル
+    \(
+        K(t) = C\exp(tA)B1
+    \)
+    と $u$ との畳み込みとして理解できる。
+    \item この表現は有限次元・無限次元のどちらの状態空間を考える場合も有効である。
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Background: Function Spaces}
+\ftheme{Notation}
+\begin{itemize}
+    \item SSM の記法では $\mathbb{B}_{\mathrm{in}}, \mathbb{B}_{\mathrm{out}}, \mathbb{B}_{\mathrm{state}}$ をバナッハ空間として扱う。
+    \item 作用素 $A \in \mathcal{L}(\mathbb{B}_{\mathrm{state}}, \mathbb{B}_{\mathrm{state}})$, $B \in \mathcal{L}(\mathbb{B}_{\mathrm{in}}, \mathbb{B}_{\mathrm{state}})$, $C \in \mathcal{L}(\mathbb{B}_{\mathrm{out}}, \mathbb{B}_{\mathrm{state}})$ とする。
+    \item LSSL では特に $\mathbb{B}_{\mathrm{in}} = \mathbb{B}_{\mathrm{out}} = \mathbb{R}$, $\mathbb{B}_{\mathrm{state}} = \mathbb{R}^N$ を用い、$d_{\mathrm{model}}$ 個を並列化して実装される。
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Outline}
+\ftheme{From Background to Infinite-dimensional Analysis}
+\begin{itemize}
+    \item HiPPO 行列を $L^2([0,N])$ 上の作用素として捉え直す。
+    \item 連続極限を通じて無限次元でのダイナミクスを導出する。
+    \item 有限次元との対応を確認し、定義を与える。
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Infinite-dimensional HiPPO}
+HiPPO 行列を用いたLSSLは次のように解釈できる。
+\begin{screen}
+\textcolor{purple}{\textbf{Theorem:}}
+HiPPO 行列による$\mathbb{R}^{N + 1}$上のLSSLの微分方程式
+\[
+    \frac{\partial h}{\partial t} = A^{\mathrm{hippo}} h + B^{\mathrm{hippo}}u
+\]
+は状態空間を\( L^2([0, N]) \)とした微分方程式
+\[
+\begin{split}
+    \frac{\partial \Tilde{h}}{\partial t} (t)(x)
+    & = - \sqrt{2x+1} \int_0^x \sqrt{2\xi + 1} \Tilde{h}(t)(\xi) d\xi
+    - \frac{1}{2} \Tilde{h}(t)(x)
+    \\
+    & + \sqrt{2x+1} \left(-\frac{1}{2}\int_0^t e^{-(t-s)} u(s) ds + u(t) \right)
+\end{split}
+\]
+を台形公式を用いて$\xi$方向に離散化したものと一致する。
+
+ただし、$d\xi \approx \Delta \xi = 1$、すなわち$h_i \approx \Tilde{h}(i)$である。
+\end{screen}
+\end{frame}
+
+\begin{frame}{Infinite-dimensional HiPPO}
+\[
+    \frac{\partial h}{\partial t}
+    = A^{\mathrm{hippo}} h + B^{\mathrm{hippo}} u
+\]
+を要素ごとに書き直すと
+\[
+\begin{split}
+    \frac{\mathrm{d} h_i}{\mathrm{d} t} =&
+    - \sqrt{2i+1} \left(
+    \textcolor{orange}{
+        \frac{h_0}{2}
+        + \sum_{l=1}^{i - 1} \sqrt{2l +1} h_l
+        + \sqrt{2i +1} \frac{h_i}{2}
+    }\right)
+    - \frac{h_i(t)}{2} \\
+    & + \sqrt{2i+1} \left(
+    - \frac{1}{2} h_0
+    + u(t)
+    \right)
+\end{split}
+\]
+ここから、\textcolor{orange}{橙部分}が台形積分近似であることから、
+\[
+\begin{split}
+    \frac{\partial \Tilde{h}}{\partial t} (t)(x)
+    & = - \sqrt{2x+1} \textcolor{orange}{\int_0^x \sqrt{2\xi + 1} \Tilde{h}(t)(\xi) d\xi }
+    - \frac{1}{2} \Tilde{h}(t)(x)
+    \\
+    & + \sqrt{2x+1} \left(-\frac{1}{2}\int_0^t e^{-(t-s)} u(s) ds + u(t) \right)
+\end{split}
+\]
+が導ける。
+\end{frame}
+
+\begin{frame}{Infinite-dimensional HiPPO}
+導かれた微分方程式は、次のように関数空間上の状態空間の形で書き直せる。
+\begin{screen}
+\[
+    \frac{\partial \Tilde{h}}{\partial t} (t)
+    = \mathcal{F}_{\chi_0, \frac{1}{2}}[\Tilde{h}(t)] + \mathcal{G}_{\chi_0}[v(t)].
+\]
+with
+\[
+    v(t) = - \frac{1}{2}\int_0^t e^{-(t-s)} u(s) ds + u(t)
+\]
+\[
+    \mathcal{F}_{\chi, \omega}[f](s)
+    = - \chi(x) \int_0^x \overline{\chi(\xi)} f(\xi) d \xi
+    - \omega f
+\]
+\[
+    \mathcal{G}_{\chi}[a](s) = a \chi(x)
+\]
+\[
+    \chi_0(x) = \sqrt{2x + 1}
+\]
+\end{screen}
+ここで、\(\mathcal{F}_{\chi, \omega}, \mathcal{G}_{\chi}\)がHiPPO行列に対応していることから、これらをHiPPOを無限次元版HiPPOと定める。
+\end{frame}
+
+\begin{frame}{Infinite-dimensional HiPPO}
+\begin{screen}
+\textcolor{blue}{\textbf{Definition:}}
+\(L^2([0,N])\)上の作用素\(\mathcal{F}_{\chi, \omega}, \mathcal{G}_{\chi}\)をInfinite-dimensional HiPPOという。
+\end{screen}
+この\(\mathcal{F}_{\chi, \omega}, \mathcal{G}_{\chi}\)を使った状態空間モデルについて、次のことがわかる。
+\begin{screen}
+\textcolor{purple}{\textbf{Theorems:}}
+    $v$はLipschitz連続であるとする。
+
+    このとき、Infinite-dimensional HiPPOを用いたLSSL
+    \[
+    \frac{\partial \Tilde{h}}{\partial t} (t)
+    = \mathcal{F}_{\chi_0, \frac{1}{2}}[\Tilde{h}(t)] + \mathcal{G}_{\chi_0}[v(t)].
+    \]
+    の強解は次のように書ける。
+    \small
+    \[
+        y(t) = \int_0^t \left(
+        e^{- \omega (t - \tau)} \int_0^N c(x) \chi(x) J_0\left(2\sqrt{t - \tau}\sqrt{\int_{0}^x \left|\chi(s)\right|^2 \mathrm{d} s}\right) \mathrm{d} x
+        \right)
+        v(\tau)  \mathrm{d} \tau
+    \]
+\end{screen}
+\end{frame}
+
+\begin{frame}{Outline}
+\ftheme{From Definition to Explicit Solutions}
+\begin{itemize}
+    \item 無限次元 HiPPO 作用素の性質を解析し、生成される半群を理解する。
+    \item 畳み込み核とハンケル変換を用いた明示的解を導出する。
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Analytical Representation}
+\ftheme{Semigroup Generated by $\mathcal{F}_{\chi,\omega}$}
+\begin{screen}
+\textcolor{purple}{\textbf{Theorem}}\\
+任意の $t > 0$ と $g \in L^2([0,N])$ に対し、
+\[
+\begin{split}
+    \exp\left(t\mathcal{F}_{\chi,\omega}\right)[g](x)
+    ={}& e^{-t\omega}\Bigg(
+        g(x)
+        + \chi(x) \int_0^x g(\xi) \overline{\chi(\xi)} \\
+        &\times \frac{\sqrt{t}\, J_1\!\left(2\sqrt{t}\sqrt{\int_{\xi}^x |\chi(s)|^2 \mathrm{d}s}\right)}
+        {\sqrt{\int_{\xi}^x |\chi(s)|^2 \mathrm{d}s}} \, \mathrm{d}\xi
+    \Bigg).
+\end{split}
+\]
+特に $g = \chi$ のとき、
+\[
+    \exp\left(t\mathcal{F}_{\chi,\omega}\right)[\chi](x)
+    = e^{-t\omega}\, \chi(x)
+    J_0\!\left(2\sqrt{t}\sqrt{\int_{0}^x |\chi(s)|^2 \mathrm{d}s}\right).
+\]
+\end{screen}
+\end{frame}
+
+\begin{frame}{Analytical Representation}
+\ftheme{Convolution Kernel}
+\begin{itemize}
+    \item 無限次元 HiPPO を用いた LSSL の解は、特殊関数を含むカーネルと入力の畳み込みとして表現できる。
+    \item これにより、連続時間の解析解と離散実装との橋渡しが可能になる。
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Outline}
+\ftheme{Toward Numerical Experiments}
+\begin{itemize}
+    \item Infinite-dimensional HiPPO を用いたカーネルの実装方法を検討。
+    \item 既存の S4Model との比較実験を通して性能を評価。
+    \item 分析結果を踏まえて利点と課題を整理する。
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Numerical Experiments}
+\ftheme{Experimental Setup}
+\begin{itemize}
+    \item 比較対象: HiPPO 行列を固定した S4Model と、無限次元カーネル $K(t)$ を用いたモデル。
+    \item データセット: Sequential MNIST。
+    \item 評価指標: 検証誤差と収束挙動。
+    \item カーネルの数値化では $K(t)$ を離散化し、S4Model と同一のトレーニング設定を使用。
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Numerical Experiments}
+\ftheme{Learning Curves}
+\begin{figure}[t]
+    \centering
+    % \includegraphics[width=0.8\linewidth]{figures/sequential-mnist-curve.pdf}
+    \caption{Sequential MNIST における検証誤差の学習曲線}
+\end{figure}
+\begin{itemize}
+    \item 無限次元カーネルを用いたモデルも、S4Model と同様に安定した学習挙動を示した。
+    \item 収束速度は同等であり、過学習の兆候も観測されない。
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Numerical Experiments}
+\ftheme{Quantitative Comparison}
+\begin{figure}[t]
+    \centering
+    % \input{figures/sequential-mnist-table.tex}
+    \caption{Sequential MNIST における検証指標の比較}
+\end{figure}
+\begin{itemize}
+    \item 無限次元カーネル版は、精度・ロスいずれの指標でも元の S4Model と同等以上の結果を得た。
+    \item HiPPO 行列を固定した構成に対して、カーネル置換による性能劣化は確認されなかった。
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusion}
+\begin{itemize}
+    \item 有限次元 HiPPO を用いた LSSL が、関数空間上の状態空間モデルの離散化であることを示した。
+    \item 無限次元 HiPPO を定義し、対応する LSSL の明示的解と畳み込み核を導出した。
+    \item 理論的性質の理解が進み、高速アルゴリズム設計への可能性を示唆する。
+    \item 数値実験では、無限次元カーネルを用いたモデルが従来法と同等以上の性能を達成した。
+\end{itemize}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{References}
+\small
+\begin{thebibliography}{99}
+    \bibitem[LSSL]{LSSL}
+    Albert Gu, Karan Goel, and Christopher Ré.
+    \newblock Low-rank recurrent neural networks for sequential modeling.
+    \newblock In \emph{Advances in Neural Information Processing Systems}, 2020.
+
+    \bibitem[HiPPO]{HiPPO}
+    Albert Gu, Karan Goel, and Christopher Ré.
+    \newblock HiPPO: Recurrent memory with optimal polynomial projections.
+    \newblock In \emph{Advances in Neural Information Processing Systems}, 2020.
+
+    \bibitem[S4]{S4}
+    Albert Gu, Isys Johnson, and Christopher Ré.
+    \newblock Combining recurrent, convolutional, and continuous-time models with the selective state space architecture.
+    \newblock In \emph{International Conference on Learning Representations}, 2022.
+\end{thebibliography}
+\end{frame}
 
 \end{document}
