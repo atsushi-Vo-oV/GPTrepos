@@ -1,0 +1,25 @@
+
+\begin{frame}{Infinite-dimensional HiPPO}
+HiPPO 行列を用いたLSSLは次のように解釈できる。
+\begin{screen}
+\textcolor{purple}{\textbf{Theorem:}}
+HiPPO 行列による$\mathbb{R}^{N + 1}$上のLSSLの微分方程式
+\[
+    \frac{\partial h}{\partial t} = A^{\mathrm{hippo}} h + B^{\mathrm{hippo}}u
+\]
+は状態空間を\( L^2([0, N]) \)とした微分方程式
+\[
+\begin{split}
+    \frac{\partial \Tilde{h}}{\partial t} (t)(x) 
+    & = - \sqrt{2x+1} \int_0^x \sqrt{2\xi + 1} \Tilde{h}(t)(\xi) d\xi 
+    - \frac{1}{2} \Tilde{h}(t)(x)
+    \\
+    & + \sqrt{2x+1} \left(-\frac{1}{2}\int_0^t e^{-(t-s)} u(s) ds + u(t) \right) 
+\end{split}    
+\]
+を台形公式を用いて$\xi$方向に離散化したものと一致する。
+
+ただし、$d\xi \approx \Delta \xi = 1$、すなわち$h_i \approx \Tilde{h}(i)$である。
+\end{screen}
+
+\end{frame}

@@ -1,0 +1,24 @@
+
+\begin{frame}{Background}
+
+\ftheme{HiPPO Matrix}
+\itemizer{
+    \item 次の行列を\eqatn{HiPPO 行列} という。
+    \item LSSLをHiPPO 行列で初期化することにより、深層学習の層としての性能が向上することが（実験的に）知られている\cite{S4}。
+}
+
+\begin{itembox}{\eqatn{HiPPO 行列}}
+    \begin{equation*}
+        A_{ij} = - \left\{
+        \begin{array}{ll}
+            (2i + 1)^{1/2} (2j+1)^{1/2} & (i > j) \\
+            i + 1 & (i = j) \\
+            0 & (i < j)
+        \end{array}
+        \right.
+    \end{equation*}
+    \begin{equation*}
+    B_{i} = (2i + 1)^{1/2}
+    \end{equation*}
+\end{itembox}
+\end{frame}

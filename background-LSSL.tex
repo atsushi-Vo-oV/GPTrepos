@@ -1,0 +1,35 @@
+
+\begin{frame}{Background}
+
+\ftheme{State Space Model, LSSL}
+
+
+\begin{itemize}
+    \item 次で表される変換\(u \to y\)を\eqatn{状態空間モデル(SSM)}という。
+    \item 特にこの変換を深層学習の層として用いたものを\eqatn{Linear State Space Layer(LSSL)}という。
+\end{itemize}
+
+\begin{itembox}{\eqatn{SSM, LSSL}}
+    \noindent
+    \begin{gather*}
+        \frac{dh}{dt}(t) = Ah(t) + Bu(t) \\
+        y(t) = Ch(t) \\ 
+        h(0) = 0
+    \end{gather*}
+\end{itembox}
+{
+\footnotesize
+ただし、
+\(u:[0,T] \to \mathbb{B}_\mathrm{in}\),
+\(h:[0,T] \to \mathbb{B}_\mathrm{out}\), 
+\(A \in \mathcal{L}(
+    \mathbb{B}_{\mathrm{state}},
+    \mathbb{B}_{\mathrm{state}})
+\),
+\(
+B \in \mathcal{L}(\mathbb{B}_{\mathrm{in}}, \mathbb{B}_{\mathrm{state}})
+\),
+\(C \in \mathcal{L}(\mathbb{B}_{\mathrm{out}}, \mathbb{B}_{\mathrm{state}})\)。
+\(\mathbb{B}_*\)はバナッハ空間を意味し、\(\mathcal{L}(\mathbb{B}_1, \mathbb{B}_2)\)は\(\mathbb{B}_1\)から\(\mathbb{B}_2\)への線形写像全体を表す。
+}
+\end{frame}

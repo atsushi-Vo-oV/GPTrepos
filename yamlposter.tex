@@ -1,0 +1,337 @@
+\documentclass[final]{beamer}
+
+\usepackage{mathrsfs} 
+\usepackage[orientation=portrait,size=a0,scale=1.4]{beamerposter}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{bbm}
+\usepackage{caption}
+\usepackage{CJKutf8}
+% 日本語用パッケージ
+\usepackage[whole]{bxcjkjatype}
+
+\newcommand{\inner}[3]{
+    \langle #1, #2 \rangle _{#3}
+}
+
+\usepackage[dvipsnames]{xcolor} 
+\usepackage{ascmac}
+
+% Custom colors and styles
+\definecolor{colortheme1}{RGB}{154, 111, 192}
+\definecolor{colortheme2}{RGB}{111, 132, 192}
+\usetheme{Rochester}
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{structure}{fg=colortheme1}
+\setbeamercolor{block title}{fg=white,bg=colortheme1}
+\setbeamercolor{block body}{fg=black,bg=white}
+
+\newenvironment{attbox}[1]{
+\begin{itembox}{{\color{black} \bf \textbf{#1}}}
+}{
+\end{itembox}
+}
+
+
+% Title style
+\title{「HiPPO 行列を用いた状態空間モデル」の無限次元化}
+\author{\underline{Atsushi Takabatake} \and Takaharu Yaguchi}
+\institute{Department of Mathematics, Kobe University}
+
+
+% 数式のフォントを変更しない
+\usefonttheme{professionalfonts} 
+
+\begin{document}
+\begin{frame}{
+    \centering
+    {\usebeamerfont{title}\huge \inserttitle}
+}
+
+
+\begin{beamercolorbox}[wd=\paperwidth,ht=0.01\paperheight,center]{structure}
+  % \usebeamerfont{title}\huge\textcolor{black}{\inserttitle}
+  \Large\textcolor{black}{\insertauthor \and -\and \insertinstitute}
+\end{beamercolorbox}
+
+
+
+\begin{columns}[T]
+\begin{column}{0.48\linewidth}
+
+\begin{block}{Abstract}
+時系列データ処理において、長距離の依存関係を扱える軽量なモデルとして、HiPPOを用いたLSSLが提案されている。この研究では、その HiPPO行列に対応する無限次元化(無限次元ベクトル空間上の線形作用素)を提案し、その作用素によるLSSLの解について明示的解を与える。
+\end{block}
+
+\begin{block}{Background - LSSL}
+作用素$A, B, C$を用いた次の変換 $u \mapsto y$ を状態空間モデル(State Space Model, SSM)という\textsuperscript{*1} \cite{LSSL}。
+\begin{attbox}{SSM, LSSL}
+\begin{align*}
+\frac{dh}{dt}(t) &= Ah(t) + Bu(t) \\
+y(t) &= Ch(t) \\ 
+h(0) & = 0
+\end{align*} 
+\end{attbox}
+特に、この変換を(時刻方向に離散化して)機械学習の層として用いたものを\textbf{LSSL}(Linear State Space Layer)と呼ぶ\textsuperscript{*2}。
+
+このLSSLの解は形式的に、次のように書ける。
+\begin{screen}
+    \[
+    y(t)=\int_0^t
+    C\exp\left((t - \tau) A\right)B
+    u(\tau)
+    \mathrm{d} \tau
+    \]
+\end{screen}
+これは$u$がスカラー関数の時、LSSLの出力が
+\(
+K(t) = 
+C\exp\left(t A\right)B1
+\)
+なる関数と\(u\)の畳み込みで表せられることを意味する。ここで、上記の解は作用素の指数関数を用いており、形式的解であることに注意。
+
+{
+\footnotesize
+(*1)
+細かく書くなら
+\(u:[0,T] \to \mathbb{B}_\mathrm{in}\),
+\(h:[0,T] \to \mathbb{B}_\mathrm{out}\), 
+\(A \in \mathcal{L}(
+    \mathbb{B}_{\mathrm{state}},
+    \mathbb{B}_{\mathrm{state}})
+\),
+\(
+B \in \mathcal{L}(\mathbb{B}_{\mathrm{in}}, \mathbb{B}_{\mathrm{state}})
+\),
+\(C \in \mathcal{L}(\mathbb{B}_{\mathrm{out}}, \mathbb{B}_{\mathrm{state}})\)。
+\(\mathbb{B}_*\)はバナッハ空間を意味し、\(\mathcal{L}(\mathbb{B}_1, \mathbb{B}_2)\)は\(\mathbb{B}_1\)から\(\mathbb{B}_2\)への線形写像全体を表す。
+}
+
+{
+\footnotesize
+(*2) LSSLでは$\mathbb{B}_\mathrm{in} = \mathbb{B}_\mathrm{out} = \mathbb{R}$, $\mathbb{B}_\mathrm{state} = \mathbb{R}^N$としている。これを$d_{\mathrm{model}}$次並列に用いる。
+}
+
+
+\end{block}
+
+\begin{block}{Background - HiPPO Matrix}
+HiPPO 行列は次で定義される\cite{HiPPO}:
+\begin{attbox}{HiPPO Matrix}
+\[
+A^{\mathrm{hippo}}_{ij} =
+-
+\begin{cases}
+(2i+1)^{1/2}(2j+1)^{1/2} & (i > j)\\
+i + 1 & (i = j)\\
+0 & (i < j)
+\end{cases}
+\]
+\[
+    B_{i}^{\mathrm{hippo}} = \sqrt{2i + 1}.
+\]
+
+\end{attbox}
+このHiPPO行列をLSSLに使うと、機械学習の層としての性能が上がることが(実験的に)知られている。
+\end{block}
+
+
+
+
+\begin{block}{Infinite Dimensional HiPPO}
+HiPPOを用いたLSSLは状態空間として$L^2$を用いたものから離散化したものであると解釈できる。以下の定理はこれを述べている。
+\begin{screen}
+\textcolor{purple}{\textbf{Theorem:}}
+HiPPO 行列による$\mathbb{R^N}$上のLSSLの微分方程式
+\[
+    \frac{\partial h}{\partial t} = A^{\mathrm{hippo}} h + B^{\mathrm{hippo}}u
+\]
+は状態空間を\( L^2([0, N]) \)とした微分方程式
+\[
+\begin{split}
+    \frac{\partial \Tilde{h}}{\partial t} (t)(x) 
+    & = - \sqrt{2x+1} \int_0^x \sqrt{2\xi + 1} \Tilde{h}(t)(\xi) d\xi 
+    - \frac{1}{2} \Tilde{h}(t)(x)
+    \\
+    & + \sqrt{2x+1} \left(-\frac{1}{2}\int_0^t e^{-(t-s)} u(s) ds + u(t) \right) 
+\end{split}    
+\]
+を台形公式を用いて$\xi$方向に離散化したものと一致する。
+
+ただし、$d\xi \approx \Delta \xi = 1$、すなわち$h_i \approx \Tilde{h}(i)$である。
+\end{screen}
+この$L^2$上の微分方程式は次のように状態空間の形に書きなおせる\textsuperscript{*3}。
+\begin{screen}
+\[
+    \frac{\partial \Tilde{h}}{\partial t} (t) 
+    = \mathcal{F}_{\chi_0, \frac{1}{2}}[\Tilde{h}(t)] + \mathcal{G}_{\chi_0}[v(t)].
+\]
+with 
+\[
+    v(t) = - \frac{1}{2}\int_0^t e^{-(t-s)} u(s) ds + u(t)
+\]
+\[
+    \mathcal{F}_{\chi, \omega}[f](s) 
+    = - \chi(x) \int_0^x \overline{\chi(\xi)} f(\xi) d \xi
+    - \omega f
+\]
+\[
+    \mathcal{G}_{\chi}[a](s) = a \chi(x) 
+\]
+\[
+    \chi_0(x) = \sqrt{2x + 1}
+\]
+\end{screen}
+この議論から導かれた作用素を\(\mathcal{F}_{\chi, \omega}, \mathcal{G}_{\chi}\)
+を無限次元空間上のHiPPOに対応するものとして考えて、Infinite-dimensional HiPPO の定義とする。
+\begin{screen}
+\textcolor{blue}{\textbf{Definition:}}
+\(\mathcal{F}_{\chi, \omega}, \mathcal{G}_{\chi}\)をInfinite-dimensional HiPPOという。
+\end{screen}
+このInfinite-dimensional HiPPOやそれを用いたLSSLについて、いくつかの表示が得られる。それを次に示す。
+
+{
+\small
+(*3) 
+\( 
+    \mathcal{F}_{\chi, \omega} : L^2([0, N]) \to L^2([0, N])
+\), 
+\(
+    \mathcal{G}_{\chi} : \mathbb{C} \to L^2([0, N])
+\)に注意。
+}
+
+
+\end{block}
+
+\end{column}
+
+\begin{column}{0.48\linewidth}
+
+
+
+\begin{block}{Infinite-dimensional HiPPOによるLSSLの解の積分表示}
+Infinite-dimensional HiPPOに対して、$\exp(t\mathcal{F}_{\varphi, \omega})$は次のように積分を用いて表すことができる。
+\begin{screen}
+\textcolor{purple}{\textbf{Theorems:}}
+    任意の$t \in \mathbb{R}_{>0}$に対し、
+    \[
+    \begin{split}
+    & \exp\left({t\mathcal{F}_{\chi, \omega}}\right)[g](x) \\
+    & = \exp(-c\omega) \left(g(x) + \chi(x) \int_0^x
+    g(\xi) \overline{\chi(\xi)}
+    \frac{\sqrt{t} J_1 
+    \left({2\sqrt{t}\sqrt{\int_{\xi}^x \left|\chi(s)\right|^2 \mathrm{d} s }}\right)}
+    {\sqrt{\int_{\xi}^x \left|\chi(s)\right|^2 \mathrm{d} s}}
+    \mathrm{d} \xi\right)
+    \end{split}
+    \]
+    特に$g = \chi$のとき 
+    \begin{equation}        
+    \begin{split}
+        \exp\left({t\mathcal{F}_{\chi, \omega}}\right)[\chi](x) 
+        = 
+        \exp\left({-t\omega} \chi(x)\right)
+        J_0
+        \left({2\sqrt{t}\sqrt{\int_{a}^x \left|\chi(s)\right|^2 \mathrm{d} s}}\right) 
+    \end{split}
+    \end{equation}
+    が成り立つ。
+\end{screen}
+従って、畳み込み核が
+\[
+    K(t) = e^{- \omega t} \int_0^N c(x) \chi(x) J_0\left(2\sqrt{t}\sqrt{\int_{0}^x \left|\chi(s)\right|^2 \mathrm{d} s}\right) \mathrm{d} x
+\]
+と明示的に書ける。
+これを用いることで、Infinite-dimensional HiPPOによるLSSLの解が次のように明示的に求まる。
+\begin{screen}
+\textcolor{purple}{\textbf{Theorems:}}
+    $v$はLipschitz連続であるとする。 
+    
+    このとき、Infinite-dimensional HiPPOを用いたLSSLの強解は次のように書ける。
+    \[
+        y(t) = \int_0^t \left(
+        e^{- \omega (t - \tau)} \int_0^N c(x) \chi(x) J_0\left(2\sqrt{t - \tau}\sqrt{\int_{0}^x \left|\chi(s)\right|^2 \mathrm{d} s}\right) \mathrm{d} x
+        \right) 
+        v(\tau)  \mathrm{d} \tau 
+    \]
+\end{screen}
+
+Remarks:
+
+$c(x) = \Hat{c}\left({\sqrt{\int_{0}^x \left|\chi(s)\right|^2 \mathrm{d} s}}\right)\overline{\chi(x)}, 
+\theta = \sqrt{\int_{0}^N \left|\chi(s)\right|^2 \mathrm{d} s}$
+と置くと、
+\[
+    y(t) 
+    = \int_0^t  
+    2 \mathcal{H}_0\left[{
+    \Hat{c} \cdot \mathbbm{1}_{[0, \theta]}
+    }\right](2\sqrt{t - \tau}) 
+    \cdot
+    e^{- \omega (t - \tau)} \cdot v(\tau)  \mathrm{d} \tau.
+\]
+となる。ここで、$\mathcal{H}_0$は$0$次ハンケル変換である。この式では、$\chi$の自由度はパラメータ$\hat{c}$に吸収されていることがわかる。
+\end{block}
+
+
+
+
+\begin{block}{数値実験}
+
+元のHiPPO行列を用いたS4model(ただし、HiPPO行列は固定)と、畳み込み核を上記の$K(t)$に置き換えたモデルを比較した結果を以下に示す。
+
+\begin{figure}[h]
+    \begin{minipage}{0.9\linewidth}
+        \includegraphics[width=0.9\linewidth]
+        {figure2.eps}
+        \captionof{figure}{
+            Sequential MNIST学習時の検証誤差の学習曲線
+        }
+    \end{minipage}
+    
+    \begin{minipage}{0.9\linewidth}
+        \centering
+        \input{tables}
+    \end{minipage}
+\end{figure}
+
+この結果から、置き換えた後でも同等以上の性能が出ることがわかる。
+
+\end{block}
+
+
+\begin{block}{Conclusions}
+\begin{itemize}
+\item 有限次元のHIPPOを用いたLSSLは関数空間上での状態空間モデルの離散化であることを示した。
+\item また、これを用いて無限次元HiPPOを提案し、これによるLSSLは明示的解を持つことを示した。
+\item この明示的な形は、理論的な解析のしやすさや、高速に計算できるアルゴリズムの可能性を与えている。
+\end{itemize}
+\end{block}
+
+
+
+\begin{block}{References}
+\footnotesize
+\begin{multicols}{2}  % 2カラムに設定
+    \beamertemplatetextbibitems
+    \bibliographystyle{plain}
+    \bibliography{mybib}
+\end{multicols}
+\end{block}
+
+
+
+
+\end{column}
+\end{columns}
+
+
+
+
+
+\end{frame}
+\end{document}
