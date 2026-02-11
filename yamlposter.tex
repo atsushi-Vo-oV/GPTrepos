@@ -10,8 +10,6 @@
 \usepackage{bbm}
 \usepackage{caption}
 \usepackage{CJKutf8}
-% 日本語用パッケージ
-\usepackage[whole]{bxcjkjatype}
 
 \newcommand{\inner}[3]{
     \langle #1, #2 \rangle _{#3}
@@ -46,6 +44,7 @@
 \usefonttheme{professionalfonts} 
 
 \begin{document}
+\begin{CJK}{UTF8}{min}
 \begin{frame}{
     \centering
     {\usebeamerfont{title}\huge \inserttitle}
@@ -334,4 +333,5 @@ $c(x) = \Hat{c}\left({\sqrt{\int_{0}^x \left|\chi(s)\right|^2 \mathrm{d} s}}\rig
 
 
 \end{frame}
+\end{CJK}
 \end{document}
