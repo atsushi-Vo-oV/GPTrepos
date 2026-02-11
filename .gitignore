@@ -1,1 +1,4 @@
 /target
+
+python_qss/__pycache__/
+*.pyc
