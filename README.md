@@ -1,6 +1,6 @@
 # 量子時空将棋 (Quantum Spacetime Shogi) プロトタイプ
 
-Rust (`eframe/egui`) と Python (`tkinter`) の両方で動かせる、ローカル2人対戦のプロトタイプです。
+Rust (`eframe/egui`) と Python (`pygame`) の両方で動かせる、ローカル2人対戦のプロトタイプです。
 
 ## Rust版
 
@@ -35,6 +35,7 @@ cargo run
 ### 起動
 
 ```bash
+pip install pygame
 python3 python_qss/app.py
 ```
 
